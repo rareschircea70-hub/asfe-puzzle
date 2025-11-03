@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CLASH OF IDEAS Puzzle</title>
+<style>
+:root {
+  --bg: #0f1724;
+  --accent: #8eff9e;
+  --text: #e6eef6;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #0f1724;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fire background */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: url('fire-bg.jpg') center/cover no-repeat;
+  filter: brightness(0.25) blur(6px) opacity(0.3);
+  z-index: -2;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.8));
+  z-index: -1;
+}
+
+.app {
+  width: 100%;
+  max-width: 900px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+  text-align: center;
+  transition: opacity 0.8s ease;
+}
+
+h1 {
+  font-size: 26px;
+  margin-bottom: 10px;
+  color: var(--accent);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(142,255,158,0.3);
+}
+
+.question {
+  margin-bottom: 30px;
+  font-size: 18px;
+  color: rgba(230,238,246,0.9);
+}
+
+.letters-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.placeholder {
+  width: 55px;
+  height: 55px;
+  border: 2px dashed rgba(255,255,255,0.3);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 28px;
+  color: var(--accent);
+}
+
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tile {
+  width: 55px;
+  height: 55px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--accent);
+  font-weight: bold;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  user-select: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.tile:active {
+  transform: scale(1.05);
+}
+
+button {
+  margin: 5px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.next-phase {
+  display: none;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+.next-phase.show {
+  display: block;
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .tile, .placeholder {
+    width: 45px;
+    height: 45px;
+    font-size: 22px;
+  }
+  h1 {
+    font-size: 22px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- PUZZLE -->
+<div class="app" id="puzzleSection">
+  <h1>Mini Puzzle</h1>
+  <div class="question">What was the name of the event?</div>
+  <div class="letters-container" id="placeholders"></div>
+  <div class="tiles" id="tiles"></div>
+  <div>
+    <button id="resetBtn">Reset</button>
+    <button id="shuffleBtn">Shuffle</button>
+  </div>
+</div>
+
+<!-- NEXT PHASE -->
+<div class="app next-phase" id="nextPhase">
+  <h2 style="font-size:32px;color:#8eff9e;">Coming soon!</h2>
+  <p style="font-size:20px;margin-bottom:30px;font-family:'Playfair Display',serif;">
+    We welcome you to the best event ever created, by students for students.
+  </p>
+  <div style="margin:40px 0;">
+    <img src="https://i.ibb.co/mCDVfRtN/logo.jpg" alt="Project Logo"
+         style="width:220px;max-width:80%;border-radius:16px;display:block;margin:0 auto 30px auto;">
+  </div>
+  <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;margin-top:10px;">
+    <img src="https://i.ibb.co/9HFHNfHn/image1.jpg" alt="Event Image 1" style="width:22%;border-radius:10px;">
+    <img src="https://i.ibb.co/2wJfp6G/image2.jpg" alt="Event Image 2" style="width:22%;border-radius:10px;">
+    <img src="https://i.ibb.co/gFLxnjDG/image3.jpg" alt="Event Image 3" style="width:22%;border-radius:10px;">
+    <img src="https://i.ibb.co/SDYbwDxc/image4.jpg" alt="Event Image 4" style="width:22%;border-radius:10px;">
+  </div>
+</div>
+
+<script>
+const WORD = "CLASHOFIDEAS".split("");
+let selectedLetters = [];
+const placeholders = document.getElementById("placeholders");
+const tilesContainer = document.getElementById("tiles");
+const puzzleSection = document.getElementById("puzzleSection");
+const nextPhase = document.getElementById("nextPhase");
+
+function initPuzzle() {
+  // reset
+  selectedLetters = [];
+  placeholders.innerHTML = "";
+  tilesContainer.innerHTML = "";
+
+  // placeholders
+  WORD.forEach(() => {
+    const p = document.createElement("div");
+    p.className = "placeholder";
+    placeholders.appendChild(p);
+  });
+
+  // tiles shuffled
+  let shuffled = shuffleArray([...WORD]);
+  shuffled.forEach((letter) => {
+    const t = document.createElement("div");
+    t.className = "tile";
+    t.textContent = letter;
+    t.addEventListener("click", () => selectLetter(letter, t));
+    tilesContainer.appendChild(t);
+  });
+}
+
+function selectLetter(letter, tile) {
+  if (selectedLetters.length < WORD.length) {
+    selectedLetters.push(letter);
+    updatePlaceholders();
+    tile.style.visibility = "hidden";
+    checkWin();
+  }
+}
+
+function updatePlaceholders() {
+  const ps = placeholders.querySelectorAll(".placeholder");
+  ps.forEach((p,i) => {
+    p.textContent = selectedLetters[i] || "";
+  });
+}
+
+function checkWin() {
+  if (selectedLetters.join("") === WORD.join("") && selectedLetters.length === WORD.length) {
+    setTimeout(() => {
+      alert("Congratulations! Moving to the next phase.");
+      puzzleSection.style.opacity = "0";
+      setTimeout(() => {
+        puzzleSection.style.display = "none";
+        nextPhase.classList.add("show");
+      }, 800);
+    }, 200);
+  }
+}
+
+function shuffleArray(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+document.getElementById("resetBtn").addEventListener("click", initPuzzle);
+document.getElementById("shuffleBtn").addEventListener("click", initPuzzle);
+
+// initialize
+initPuzzle();
+</script>
+</body>
+</html>
