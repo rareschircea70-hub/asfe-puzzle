@@ -25,7 +25,7 @@ html, body {
   overflow: hidden;
 }
 
-/* Subtle fire background */
+/* Fire background */
 body::before {
   content: "";
   position: fixed;
@@ -36,7 +36,6 @@ body::before {
   z-index: -2;
 }
 
-/* Dark tint for readability */
 body::after {
   content: "";
   position: fixed;
@@ -71,6 +70,27 @@ h1 {
   color: rgba(230,238,246,0.9);
 }
 
+.letters-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.placeholder {
+  width: 55px;
+  height: 55px;
+  border: 2px dashed rgba(255,255,255,0.3);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 28px;
+  color: var(--accent);
+}
+
 .tiles {
   display: flex;
   flex-wrap: wrap;
@@ -92,11 +112,21 @@ h1 {
   justify-content: center;
   border-radius: 10px;
   user-select: none;
-  cursor: grab;
+  cursor: pointer;
   transition: transform 0.2s ease;
 }
 .tile:active {
   transform: scale(1.05);
+}
+
+button {
+  margin: 5px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
 }
 
 .next-phase {
@@ -110,9 +140,8 @@ h1 {
   opacity: 1;
 }
 
-/* Responsive */
 @media (max-width: 600px) {
-  .tile {
+  .tile, .placeholder {
     width: 45px;
     height: 45px;
     font-size: 22px;
@@ -125,27 +154,28 @@ h1 {
 </head>
 <body>
 
-<!-- PUZZLE SECTION -->
+<!-- PUZZLE -->
 <div class="app" id="puzzleSection">
   <h1>Mini Puzzle</h1>
   <div class="question">What was the name of the event?</div>
+  <div class="letters-container" id="placeholders"></div>
   <div class="tiles" id="tiles"></div>
+  <div>
+    <button id="resetBtn">Reset</button>
+    <button id="shuffleBtn">Shuffle</button>
+  </div>
 </div>
 
-<!-- NEXT PHASE / COMING SOON -->
+<!-- NEXT PHASE -->
 <div class="app next-phase" id="nextPhase">
   <h2 style="font-size:32px;color:#8eff9e;">Coming soon!</h2>
   <p style="font-size:20px;margin-bottom:30px;font-family:'Playfair Display',serif;">
     We welcome you to the best event ever created, by students for students.
   </p>
-
-  <!-- Logo at top -->
-  <div style="margin: 40px 0;">
+  <div style="margin:40px 0;">
     <img src="https://i.ibb.co/mCDVfRtN/logo.jpg" alt="Project Logo"
          style="width:220px;max-width:80%;border-radius:16px;display:block;margin:0 auto 30px auto;">
   </div>
-
-  <!-- 4 bottom images -->
   <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;margin-top:10px;">
     <img src="https://i.ibb.co/9HFHNfHn/image1.jpg" alt="Event Image 1" style="width:22%;border-radius:10px;">
     <img src="https://i.ibb.co/2wJfp6G/image2.jpg" alt="Event Image 2" style="width:22%;border-radius:10px;">
@@ -155,44 +185,55 @@ h1 {
 </div>
 
 <script>
-const word = "CLASHOFIDEAS".split("");
+const WORD = "CLASHOFIDEAS".split("");
+let selectedLetters = [];
+const placeholders = document.getElementById("placeholders");
 const tilesContainer = document.getElementById("tiles");
 const puzzleSection = document.getElementById("puzzleSection");
 const nextPhase = document.getElementById("nextPhase");
 
-// Shuffle letters
-function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
+function initPuzzle() {
+  // reset
+  selectedLetters = [];
+  placeholders.innerHTML = "";
+  tilesContainer.innerHTML = "";
+
+  // placeholders
+  WORD.forEach(() => {
+    const p = document.createElement("div");
+    p.className = "placeholder";
+    placeholders.appendChild(p);
+  });
+
+  // tiles shuffled
+  let shuffled = shuffleArray([...WORD]);
+  shuffled.forEach((letter) => {
+    const t = document.createElement("div");
+    t.className = "tile";
+    t.textContent = letter;
+    t.addEventListener("click", () => selectLetter(letter, t));
+    tilesContainer.appendChild(t);
+  });
 }
 
-let shuffled = shuffle([...word]);
-shuffled.forEach((ch, i) => {
-  const div = document.createElement("div");
-  div.className = "tile";
-  div.draggable = true;
-  div.textContent = ch;
-  div.dataset.index = i;
-  tilesContainer.appendChild(div);
-});
+function selectLetter(letter, tile) {
+  if (selectedLetters.length < WORD.length) {
+    selectedLetters.push(letter);
+    updatePlaceholders();
+    tile.style.visibility = "hidden";
+    checkWin();
+  }
+}
 
-let dragSrc = null;
-tilesContainer.addEventListener("dragstart", e => {
-  if (e.target.classList.contains("tile")) dragSrc = e.target;
-});
-
-tilesContainer.addEventListener("dragover", e => e.preventDefault());
-
-tilesContainer.addEventListener("drop", e => {
-  if (!dragSrc || !e.target.classList.contains("tile")) return;
-  const srcText = dragSrc.textContent;
-  dragSrc.textContent = e.target.textContent;
-  e.target.textContent = srcText;
-  checkWin();
-});
+function updatePlaceholders() {
+  const ps = placeholders.querySelectorAll(".placeholder");
+  ps.forEach((p,i) => {
+    p.textContent = selectedLetters[i] || "";
+  });
+}
 
 function checkWin() {
-  const current = [...tilesContainer.querySelectorAll(".tile")].map(t => t.textContent).join("");
-  if (current === word.join("")) {
+  if (selectedLetters.join("") === WORD.join("") && selectedLetters.length === WORD.length) {
     setTimeout(() => {
       alert("Congratulations! Moving to the next phase.");
       puzzleSection.style.opacity = "0";
@@ -200,9 +241,19 @@ function checkWin() {
         puzzleSection.style.display = "none";
         nextPhase.classList.add("show");
       }, 800);
-    }, 300);
+    }, 200);
   }
 }
+
+function shuffleArray(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+document.getElementById("resetBtn").addEventListener("click", initPuzzle);
+document.getElementById("shuffleBtn").addEventListener("click", initPuzzle);
+
+// initialize
+initPuzzle();
 </script>
 </body>
 </html>
